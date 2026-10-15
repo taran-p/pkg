@@ -79,12 +79,20 @@ func (statement Statement) IsAllowedPtr(args *Args) bool {
 	return statement.isAllowedFor(args, buildRequestResource(args))
 }
 
+// matchesAction reports whether the statement applies to action, counting the
+// actions its named actions imply.
+func (statement Statement) matchesAction(action Action) bool {
+	if !statement.Actions.IsEmpty() && !statement.Actions.Match(action) {
+		return false
+	}
+	return !statement.NotActions.Match(action)
+}
+
 // isAllowedFor is IsAllowedPtr with the request resource string supplied by the
 // caller.
 func (statement Statement) isAllowedFor(args *Args, resource string) bool {
 	check := func() bool {
-		if (!statement.Actions.Match(args.Action) && !statement.Actions.IsEmpty()) ||
-			statement.NotActions.Match(args.Action) {
+		if !statement.matchesAction(args.Action) {
 			return false
 		}
 
